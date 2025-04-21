@@ -97,8 +97,10 @@ public ResponseEntity<String> create(
         
         String rawFileName = file.getOriginalFilename();
         String safeFileName = Paths.get(rawFileName).getFileName().toString(); // << ตัด path ออก
-        String fileName = System.currentTimeMillis() + "_" + safeFileName;
+
         
+        String fileName = System.currentTimeMillis() + "_" + safeFileName;
+
         Path filePath = uploadPath.resolve(fileName);
 
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
