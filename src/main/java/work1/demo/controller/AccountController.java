@@ -98,7 +98,7 @@ public ResponseEntity<String> create(
         String rawFileName = file.getOriginalFilename();
         String safeFileName = Paths.get(rawFileName).getFileName().toString(); // << ตัด path ออก
 
-        
+
         String fileName = System.currentTimeMillis() + "_" + safeFileName;
 
         Path filePath = uploadPath.resolve(fileName);
@@ -240,22 +240,38 @@ return ResponseEntity.ok(response);
     }
 
 
-    @GetMapping("/base64")
-    public ResponseEntity<String> getImageAsBase64(@RequestParam String filename) {
-        File imageFile = new File(filename);
+   @GetMapping("/base64")
+public ResponseEntity<String> getImageAsBase64(@RequestParam String filename) {
+    // 🔐 1. โฟลเดอร์ปลอดภัย
+    Path basePath = Paths.get("/home/aueaungoorn/uploads").normalize(); // เปลี่ยน path ให้ตรงระบบของคุณ
 
-        if (!imageFile.exists()) {
-            return ResponseEntity.notFound().build();
-        }
+    // 🔒 2. รวม path แล้ว normalize
+    Path targetPath = basePath.resolve(filename).normalize();
 
-        try {
-            byte[] imageBytes = Files.readAllBytes(imageFile.toPath());
-            String base64String = Base64.getEncoder().encodeToString(imageBytes); // ✅ ใช้ของ java.util
-            return ResponseEntity.ok(base64String);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
-        }
+    // 🚫 3. ป้องกัน path traversal
+    if (!targetPath.startsWith(basePath)) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("❌ Invalid file path");
     }
+
+    // ✅ 4. ตรวจสอบและอ่านไฟล์
+    File imageFile = targetPath.toFile();
+    if (!imageFile.exists()) {
+        return ResponseEntity.notFound().build();
+    }
+
+    try {
+        byte[] imageBytes = Files.readAllBytes(imageFile.toPath());
+        String base64String = Base64.getEncoder().encodeToString(imageBytes);
+        return ResponseEntity.ok(base64String);
+    } catch (IOException e) {
+        return ResponseEntity.status(500).body("Error: " + e.getMessage());
+    }
+
+    
+}
+
+    
 
 
 @PostMapping("/getSport")
