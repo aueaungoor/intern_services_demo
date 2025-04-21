@@ -60,7 +60,8 @@ import org.apache.commons.text.StringEscapeUtils;
 
 
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200") 
+
 @RequestMapping("/accounts")
 public class AccountController {
 
