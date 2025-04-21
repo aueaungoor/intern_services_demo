@@ -3,7 +3,6 @@ package work1.demo.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -125,7 +124,11 @@ public class AccountService {
         }
 
         // 2. ตั้งชื่อไฟล์ใหม่กันชื่อซ้ำ
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        
+        String rawFileName = file.getOriginalFilename();
+        String safeFileName = sanitizeFileName(rawFileName);
+        String fileName = System.currentTimeMillis() + "_" + safeFileName;
+        
         Path filePath = uploadPath.resolve(fileName);
 
         // 3. เซฟไฟล์ลง disk
@@ -150,6 +153,9 @@ public class AccountService {
     }
 }
 
+public String sanitizeFileName(String original) {
+    return Paths.get(original).getFileName().toString();
+}
 
 public AccountList getAccountList(Paging param) {
 
