@@ -14,6 +14,8 @@ import work1.demo.service.CommonUtils;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +50,11 @@ import java.io.File;
 import java.nio.file.*;
 
 
+import work1.demo.service.AccountService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -55,7 +63,7 @@ import java.nio.file.*;
 public class AccountController {
 
     
-    @Value("${pathpicture}")
+    @Value("")
     private String prefixPath;
 
     @Autowired
@@ -70,17 +78,7 @@ public class AccountController {
 
     private static final Logger log = LoggerFactory.getLogger(AccountController.class);
 
-    @GetMapping
-    public List<Account> getAll() {
-        return accountService.getAllAccounts();
-    }
 
-    @GetMapping("/{id}")
-    public Account getById(@PathVariable Long id) {
-        return accountService.getAccountById(id).orElse(null);
-    }
-
-    // @PostMapping
     
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public ResponseEntity<String> create(
@@ -89,7 +87,6 @@ public ResponseEntity<String> create(
 
     log.info("account -> {}", account);
 
-    // final String UPLOAD_DIR = $value
 
     try {
         Path uploadPath = Paths.get(prefixPath);
@@ -105,6 +102,8 @@ public ResponseEntity<String> create(
         // ✅ เก็บ path ลง Account ก่อน save
         account.setPathpicture(filePath.toString());
 
+        log.info("account", account);
+
         accountService.createAccount(account);
 
         return ResponseEntity.ok("สร้างบัญชีและอัปโหลดไฟล์สำเร็จ: " + fileName);
@@ -116,14 +115,12 @@ public ResponseEntity<String> create(
 
    @PutMapping("/editaccount/{id}")
    public ResponseEntity<String> update(
-     @PathVariable Long id , @RequestBody Account account )
+@PathVariable Long id , @RequestBody Account account )
     {
         log.info("account -> {}",account);
         try{
             accountService.updateAccount(account , id);
-           
             return ResponseEntity.ok("แก้ไขบัญชีเรียบร้อย: " );
-           
         }
         catch (Exception e) {
             return ResponseEntity.status(500).body("เกิดข้อผิดพลาด: " + e.getMessage());
@@ -149,6 +146,23 @@ public ResponseEntity<String> create(
    }
    
 
+   @GetMapping("/{id}")
+   public ResponseEntity<Map<String, Object>> getAccount(@PathVariable Long id) {
+    try {
+        Optional<Account> result = accountService.getAccountById(id);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", result);
+        response.put("message", "ดึงข้อมูลสำเร็จ");
+
+        return ResponseEntity.ok(response);
+    } catch (Exception e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("message", "ไม่สามารถดึงข้อมูลอาชีพได้");
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+   }
    
 
     @DeleteMapping("/{id}")
@@ -163,16 +177,44 @@ public ResponseEntity<String> deleteAccount(@PathVariable Long id) {
     }
 }
 
-    
+
 
 @PostMapping("/addCareer")
-public AccountCareer addCareer(@RequestBody AccountCareer newCareer) {
-    return accountCareerService.addCareer(newCareer);
+public ResponseEntity<Map<String, Object>> addCareer(@RequestBody AccountCareer newCareer) {
+    try {
+        AccountCareer result = accountCareerService.addCareer(newCareer);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", result);
+        response.put("message", "เพิ่มข้อมูลอาชีพสำเร็จ");
+
+        return ResponseEntity.ok(response);
+    } catch (Exception e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("message", "ไม่สามารถดึงข้อมูลอาชีพได้");
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
 }
 
+
 @PostMapping("/addSport")
-public AccountSport addSport(@RequestBody AccountSport newSport) {
-    return accountSportService.addSport(newSport);
+public ResponseEntity<Map<String , Object>> addSport(@RequestBody AccountSport newSport) {
+    try{
+AccountSport result = accountSportService.addSport(newSport);
+
+Map<String , Object> response = new HashMap<>();
+response.put("data" , result);
+response.put("status","เพิ่มข้อมูลกีฬาเรัยบร้อย");
+
+return ResponseEntity.ok(response);
+    } catch(Exception e)
+    {
+        Map<String , Object> error = new HashMap<>();
+        error.put("status","eไม่สามารถเพิ่มข้อมูลกีฬาได้");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+     
 }
 
 @PostMapping("/getCareer")
@@ -287,7 +329,15 @@ public boolean checkLogin(@RequestBody Map<String, String> loginData) {
  }
 
 
-
+ @GetMapping("/download")
+    public ResponseEntity<Resource> downloadZip(@RequestParam String sourceFolder,
+                                                @RequestParam String zipName) {
+        try {
+            return accountService.zipAndReturn(sourceFolder, zipName);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+    }
     
 
 

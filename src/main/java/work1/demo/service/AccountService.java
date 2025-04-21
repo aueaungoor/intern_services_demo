@@ -2,6 +2,7 @@ package work1.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.stereotype.Service;
@@ -15,15 +16,24 @@ import work1.demo.data.Paging;
 import work1.demo.model.*;
 import work1.demo.repository.*;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
 
 @Service
 public class AccountService {
@@ -33,7 +43,6 @@ public class AccountService {
 
     @Value("${pathpicture}")
     private String prefixPath;
-
 
     @Autowired
     private AccountRepository accountRepository;
@@ -45,8 +54,6 @@ public class AccountService {
 
     public List<Account> getAllAccounts() {
         return accountRepository.findAll();
-
-        
     }
 
     public Optional<Account> getAccountById(Long id) {
@@ -178,6 +185,71 @@ public List<Account> search(Account param) {
      return jdbcTemplate.query(sql ,new BeanPropertyRowMapper<>(Account.class) , like , like);
   
 }
+
+public ResponseEntity<Resource> zipAndReturn(String sourceFolder, String zipFileName) throws IOException {
+        String zipPath = "/tmp/" + zipFileName + ".zip";
+
+        // 1. สร้างไฟล์ zip
+        zipFolder(sourceFolder, zipPath);
+
+        // 2. เตรียม Resource สำหรับ ResponseEntity
+        File zipFile = new File(zipPath);
+        if (!zipFile.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + zipFile.getName() + "\"")
+                .contentLength(zipFile.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    // เมธอดหลักในการ zip โฟลเดอร์
+    private void zipFolder(String sourceFolderPath, String outputZipPath) throws IOException {
+        FileOutputStream fos = new FileOutputStream(outputZipPath);
+        ZipOutputStream zos = new ZipOutputStream(fos);
+
+        File sourceFolder = new File(sourceFolderPath);
+        zipFile(sourceFolder, sourceFolder.getName(), zos);
+
+        zos.close();
+        fos.close();
+    }
+
+    // recursive zip file
+    private void zipFile(File fileToZip, String fileName, ZipOutputStream zos) throws IOException {
+        if (fileToZip.isHidden()) return;
+
+        if (fileToZip.isDirectory()) {
+            if (!fileName.endsWith("/")) fileName += "/";
+            zos.putNextEntry(new ZipEntry(fileName));
+            zos.closeEntry();
+
+            File[] children = fileToZip.listFiles();
+            if (children != null) {
+                for (File childFile : children) {
+                    zipFile(childFile, fileName + childFile.getName(), zos);
+                }
+            }
+            return;
+        }
+
+        FileInputStream fis = new FileInputStream(fileToZip);
+        ZipEntry zipEntry = new ZipEntry(fileName);
+        zos.putNextEntry(zipEntry);
+
+        byte[] buffer = new byte[1024];
+        int len;
+        while ((len = fis.read(buffer)) > 0) {
+            zos.write(buffer, 0, len);
+        }
+
+        fis.close();
+    }
+
 
 
 }
