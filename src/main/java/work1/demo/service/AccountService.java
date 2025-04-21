@@ -127,6 +127,8 @@ public class AccountService {
         
         String rawFileName = file.getOriginalFilename();
         String safeFileName = sanitizeFileName(rawFileName);
+
+        
         String fileName = System.currentTimeMillis() + "_" + safeFileName;
         
         Path filePath = uploadPath.resolve(fileName);
