@@ -128,7 +128,7 @@ public class AccountService {
         String rawFileName = file.getOriginalFilename();
         String safeFileName = sanitizeFileName(rawFileName);
 
-        
+
         String fileName = System.currentTimeMillis() + "_" + safeFileName;
         
         Path filePath = uploadPath.resolve(fileName);
@@ -229,37 +229,47 @@ public ResponseEntity<Resource> zipAndReturn(String sourceFolder, String zipFile
 
     // recursive zip file
     private void zipFile(File fileToZip, String fileName, ZipOutputStream zos) throws IOException {
+        // ป้องกัน Path Traversal โดยกำหนด path ปลอดภัย
+        Path basePath = Paths.get("/home/aueaungoorn/uploads").toRealPath(); // 🔐 แก้ตรงนี้หากคุณใช้ path อื่น
+        Path requestedPath = fileToZip.toPath().toRealPath();
+    
+        // ❗ หาก path ไม่ได้อยู่ภายใน base path ให้ block ทันที
+        if (!requestedPath.startsWith(basePath)) {
+            throw new SecurityException("❌ Path traversal detected: " + requestedPath);
+        }
+    
+        // ข้ามไฟล์ซ่อน
         if (fileToZip.isHidden()) return;
-
+    
+        // ถ้าเป็นโฟลเดอร์ → zip recursive
         if (fileToZip.isDirectory()) {
             if (!fileName.endsWith("/")) fileName += "/";
             zos.putNextEntry(new ZipEntry(fileName));
             zos.closeEntry();
-
+    
             File[] children = fileToZip.listFiles();
             if (children != null) {
                 for (File childFile : children) {
-                    zipFile(childFile, fileName + childFile.getName(), zos);
+                    zipFile(childFile, fileName + childFile.getName(), zos); // 🔁 ทำซ้ำสำหรับไฟล์ลูก
                 }
             }
             return;
         }
-
+    
+        // ถ้าเป็นไฟล์ปกติ → zip ไฟล์
         FileInputStream fis = new FileInputStream(fileToZip);
         ZipEntry zipEntry = new ZipEntry(fileName);
         zos.putNextEntry(zipEntry);
-
+    
         byte[] buffer = new byte[1024];
         int len;
         while ((len = fis.read(buffer)) > 0) {
             zos.write(buffer, 0, len);
         }
-
+    
         fis.close();
     }
-
-
-
+    
 }
     
 
