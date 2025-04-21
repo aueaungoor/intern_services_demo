@@ -56,6 +56,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -111,8 +113,8 @@ public ResponseEntity<String> create(
         log.info("account", account);
 
         accountService.createAccount(account);
-
-        return ResponseEntity.ok("สร้างบัญชีและอัปโหลดไฟล์สำเร็จ: " + fileName);
+        String escapedFileName = StringEscapeUtils.escapeHtml4(fileName);
+return ResponseEntity.ok("สร้างบัญชีและอัปโหลดไฟล์สำเร็จ: " + escapedFileName);
     } catch (IOException e) {
         return ResponseEntity.status(500).body("เกิดข้อผิดพลาด: " + e.getMessage());
     }
@@ -268,7 +270,7 @@ public ResponseEntity<String> getImageAsBase64(@RequestParam String filename) {
         return ResponseEntity.status(500).body("Error: " + e.getMessage());
     }
 
-    
+
 }
 
     
