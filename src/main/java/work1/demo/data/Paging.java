@@ -7,4 +7,5 @@ public class Paging
     private Long limit;
     private Long index;
     private Long totalpage;
+    
 }
