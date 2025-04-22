@@ -340,7 +340,7 @@ public boolean checkLogin(@RequestBody Map<String, String> loginData) {
 
 
  @PostMapping("/search")
- public ResponseEntity <Map<String , Object>> search(@RequestBody Account key) 
+ public ResponseEntity <Map<String , Object>> search(@RequestBody Account key)
  {
    try{
     List<Account> result = accountService.search(key);
