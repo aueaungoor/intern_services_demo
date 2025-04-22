@@ -79,11 +79,13 @@ class DemoApplicationTests {
 		log.info("รายการ Account ทั้งหมด service:");
     for (Account acc : list) {
         log.info(" - id: {}, username: {}, fname: {}", acc.getIdaccount(), acc.getUsername(), acc.getFname());
+
     }
 	}
 
    @Test
 void testSearchAccountsAndLoopResult() throws Exception {
+    
     Account searchRequest = new Account();
     searchRequest.setUsername("a");
 
