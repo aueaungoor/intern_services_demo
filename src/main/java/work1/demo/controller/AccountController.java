@@ -343,6 +343,7 @@ public boolean checkLogin(@RequestBody Map<String, String> loginData) {
  public ResponseEntity <Map<String , Object>> search(@RequestBody Account key)
  {
    try{
+    
     List<Account> result = accountService.search(key);
      return new ResponseEntity<>(CommonUtils.response(result ,  SUCCESS), HttpStatus.OK);
 
