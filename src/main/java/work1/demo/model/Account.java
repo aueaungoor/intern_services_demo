@@ -4,32 +4,26 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Data
 public class Account {
-	@Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idaccount;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long idaccount;
 
-   
-        public String username;
-        public String password;
-        public String fname;
-        public String lname;
-        public String description;
-        public String gender;
-       
+        private String username;
+        private String password;
+        private String fname;
+        private String lname;
+        private String description;
+        private String gender;
 
         @JsonFormat(pattern = "yyyy-MM-dd")
-private Date birthday;
+        private Date birthday;
 
-        public String pathpicture;
-   
-    
+        private String pathpicture;
 
-   
 }
