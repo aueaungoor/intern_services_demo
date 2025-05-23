@@ -10,7 +10,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -73,21 +72,30 @@ public class AccountController {
     private static final Logger log = LoggerFactory.getLogger(AccountController.class);
 
     @PostMapping("/creat-account")
-    public ResponseEntity<String> CreatAccount(@RequestBody Account data) {
-        try {
-            String result = accountService.createAccount(data);
+    public ResponseEntity<Object> CreatAccount(@RequestBody Account data) {
+        Map<String, Object> response = new HashMap<>();
+        String result = accountService.createAccount(data);
 
+        try {
             if ("success".equalsIgnoreCase(result)) {
-                return ResponseEntity.ok("สร้างบัญชีสำเร็จ");
+
+                response.put("message", "สร้างบัญชีสำเร็จ");
+                response.put("data", data);
+
+                return ResponseEntity.ok(response);
             } else {
+                response.put("message", "เกิดข้อผิดพลาดในการสร้างบัญชี");
+                response.put("data", null);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("เกิดข้อผิดพลาดในการสร้างบัญชี");
+                        .body(response);
             }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            response.put("message", "เกิดข้อผิดพลาดในระบบ");
+            response.put("data", null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("เกิดข้อผิดพลาดในระบบ");
+                    .body(response);
         }
     }
 
@@ -185,7 +193,7 @@ public class AccountController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getAccount(@PathVariable Long id) {
         try {
-            Optional<Account> result = accountService.getAccountById(id);
+            Account result = accountService.getAccountById(id);
 
             Map<String, Object> response = new HashMap<>();
             response.put("data", result);
@@ -194,7 +202,8 @@ public class AccountController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "ไม่สามารถดึงข้อมูลอาชีพได้");
+            log.info(e.toString());
+            error.put("message", "ดึงข้อมูลไม่สำเร็จ");
 
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
@@ -334,20 +343,35 @@ public class AccountController {
     }
 
     @PostMapping("/checkLogin")
-    public boolean checkLogin(@RequestBody Map<String, String> loginData) {
-        {
-            String username = loginData.get("username");
-            String password = loginData.get("password");
+    public ResponseEntity<Map<String, Object>> checkLogin(@RequestBody Account loginData) {
 
-            boolean valid = accountService.checkLogin(username, password);
+        Account result = accountService.checkLogin(loginData);
 
-            if (valid) {
-                return true;
+        try {
+            if (result != null) {
+                Map<String, Object> response = new HashMap<>();
+
+                response.put("data", result);
+                response.put("message", "ดึงข้อมูลสำเร็จ");
+
+                return ResponseEntity.ok(response);
             } else {
-                return false;
+                Map<String, Object> response = new HashMap<>();
+
+                response.put("data", null);
+                response.put("message", "ไม่เจอข้อมูลในระบบ");
+                return ResponseEntity.ok(response);
+
             }
 
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "เกิดข้อผิดพลาด");
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+
         }
+
     }
 
     @PostMapping("/search")

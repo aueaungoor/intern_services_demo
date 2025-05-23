@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -50,7 +49,9 @@ public class AccountService {
 
     private static final String WHERE = "where";
 
-    @Value("${pathpicture}")
+    private static final String AND = "AND";
+
+    @Value("")
     private String prefixPath;
 
     @Autowired
@@ -63,8 +64,20 @@ public class AccountService {
         return accountRepository.findAll();
     }
 
-    public Optional<Account> getAccountById(Long id) {
-        return accountRepository.findById(id);
+    public Account getAccountById(Long id) {
+
+        StringBuilder sb = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+
+        sb.append("SELECT * FROM account ");
+        sb.append(WHERE);
+        sb.append(" idaccount = ? ");
+        params.add(id);
+
+        return jdbcTemplate.queryForObject(
+                sb.toString(),
+                params.toArray(),
+                new BeanPropertyRowMapper<>(Account.class));
     }
 
     public String createAccount(Account criteria) {
@@ -93,26 +106,25 @@ public class AccountService {
                 params.add(criteria.getLname());
             }
             if (null != criteria.getDescription()) {
-                sb.append("description,");
+                columns.add("description");
                 params.add(criteria.getDescription());
             }
             if (null != criteria.getGender()) {
-                sb.append("gender,");
+                columns.add("gender");
                 params.add(criteria.getGender());
             }
             if (null != criteria.getBirthday()) {
-                sb.append("birthday,");
+                columns.add("birthday");
                 params.add(criteria.getBirthday());
             }
 
-            sb.append("pathpicture ");
+            columns.add("pathpicture ");
+            params.add("defaultProfile.jpg");
             sb.append(String.join(", ", columns));
             sb.append(") VALUES (");
             sb.append(columns.stream().map(c -> "?").collect(Collectors.joining(", ")));
             sb.append(")");
             jdbcTemplate.update(sb.toString(), params.toArray());
-
-            log.info("testtest");
 
             return SUCCUESS;
         } catch (Exception e) {
@@ -152,13 +164,30 @@ public class AccountService {
         return jdbcTemplate.update(sql, id);
     }
 
-    public boolean checkLogin(String username, String password) {
+    public Account checkLogin(Account criterial) {
 
-        String sql = "SELECT COUNT(*) FROM account WHERE username = ? AND password = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, username, password);
+        StringBuilder sb = new StringBuilder();
+        List<Object> params = new ArrayList<>();
 
-        return count != null && count > 0;
+        sb.append("SELECT * FROM account WHERE 1=1 "); // ✅ base WHERE เพื่อ AND ต่อได้ง่าย
 
+        if (criterial.getUsername() != null) {
+            sb.append(" AND username = ? ");
+            params.add(criterial.getUsername());
+        }
+
+        if (criterial.getPassword() != null) {
+            sb.append(" AND password = ? ");
+            params.add(criterial.getPassword());
+        }
+
+        sb.append(" LIMIT 1 ");
+
+        return jdbcTemplate.queryForObject(
+                sb.toString(),
+                params.toArray(), // ✅ ใช้ array, ไม่ใช่ .toString()
+                new BeanPropertyRowMapper<>(Account.class) // ✅ ใช้ mapper
+        );
     }
 
     public void editpicture(Long id, MultipartFile file) {
