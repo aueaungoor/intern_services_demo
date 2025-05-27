@@ -276,16 +276,9 @@ public class AccountController {
     @GetMapping("/base64")
     public ResponseEntity<String> getImageAsBase64(@RequestParam String filename) {
         // 🔐 1. โฟลเดอร์ปลอดภัย
-        Path basePath = Paths.get("/home/aueaungoorn/uploads").normalize(); // เปลี่ยน path ให้ตรงระบบของคุณ
+        Path targetPath = Paths.get(filename).normalize(); // เปลี่ยน path ให้ตรงระบบของคุณ
 
-        // 🔒 2. รวม path แล้ว normalize
-        Path targetPath = basePath.resolve(filename).normalize();
-
-        // 🚫 3. ป้องกัน path traversal
-        if (!targetPath.startsWith(basePath)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("❌ Invalid file path");
-        }
+        log.info("pathpic" + targetPath);
 
         // ✅ 4. ตรวจสอบและอ่านไฟล์
         File imageFile = targetPath.toFile();
@@ -296,6 +289,8 @@ public class AccountController {
         try {
             byte[] imageBytes = Files.readAllBytes(imageFile.toPath());
             String base64String = Base64.getEncoder().encodeToString(imageBytes);
+            log.info("real path pic" + base64String);
+
             return ResponseEntity.ok(base64String);
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Error: " + e.getMessage());

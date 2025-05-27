@@ -51,7 +51,7 @@ public class AccountService {
 
     private static final String AND = "AND";
 
-    @Value("")
+    @Value("${prefixPath}")
     private String prefixPath;
 
     @Autowired
@@ -165,44 +165,44 @@ public class AccountService {
     }
 
     public Account checkLogin(Account criterial) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            List<Object> params = new ArrayList<>();
 
-        StringBuilder sb = new StringBuilder();
-        List<Object> params = new ArrayList<>();
+            sb.append("SELECT * FROM account WHERE 1=1 "); // base where
 
-        sb.append("SELECT * FROM account WHERE 1=1 "); // ✅ base WHERE เพื่อ AND ต่อได้ง่าย
+            if (criterial.getUsername() != null) {
+                sb.append(" AND username = ? ");
+                params.add(criterial.getUsername());
+            }
 
-        if (criterial.getUsername() != null) {
-            sb.append(" AND username = ? ");
-            params.add(criterial.getUsername());
+            if (criterial.getPassword() != null) {
+                sb.append(" AND password = ? ");
+                params.add(criterial.getPassword());
+            }
+
+            sb.append(" LIMIT 1 ");
+
+            return jdbcTemplate.queryForObject(
+                    sb.toString(),
+                    params.toArray(),
+                    new BeanPropertyRowMapper<>(Account.class));
+
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-
-        if (criterial.getPassword() != null) {
-            sb.append(" AND password = ? ");
-            params.add(criterial.getPassword());
-        }
-
-        sb.append(" LIMIT 1 ");
-
-        return jdbcTemplate.queryForObject(
-                sb.toString(),
-                params.toArray(), // ✅ ใช้ array, ไม่ใช่ .toString()
-                new BeanPropertyRowMapper<>(Account.class) // ✅ ใช้ mapper
-        );
     }
 
     public void editpicture(Long id, MultipartFile file) {
         try {
-            // 1. เตรียม path
             Path uploadPath = Paths.get(prefixPath);
-            log.info(prefixPath);
-
-            log.info("uploadPath->{}", uploadPath);
 
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-
-            // 2. ตั้งชื่อไฟล์ใหม่กันชื่อซ้ำ
 
             String rawFileName = file.getOriginalFilename();
             String safeFileName = sanitizeFileName(rawFileName);
@@ -213,6 +213,8 @@ public class AccountService {
 
             // 3. เซฟไฟล์ลง disk
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            log.info("sdfsdfsdfsdf");
 
             // 4. โหลด Account จาก DB
             String sql = "SELECT * FROM account WHERE idaccount = ?";
