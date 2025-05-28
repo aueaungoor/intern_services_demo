@@ -30,4 +30,10 @@ public class Account {
 
         private String pathpicture;
 
+        private String country;
+
+        private String province;
+
+        private String district;
+
 }

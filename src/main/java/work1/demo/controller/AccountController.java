@@ -36,10 +36,14 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import work1.demo.data.AccountList;
+import work1.demo.data.Location;
 import work1.demo.data.Paging;
 import work1.demo.model.Account;
 import work1.demo.model.AccountCareer;
 import work1.demo.model.AccountSport;
+import work1.demo.model.Country;
+import work1.demo.model.District;
+import work1.demo.model.Province;
 import work1.demo.service.AccountCareerService;
 import work1.demo.service.AccountService;
 import work1.demo.service.AccountsportService;
@@ -390,6 +394,37 @@ public class AccountController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(null);
         }
+    }
+
+    @PostMapping("/find-location")
+    public ResponseEntity<Map<String, Object>> findlocation(@RequestBody Location location) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (location.getCountry() == null && location.getProvince() == null) {
+                List<Country> result = accountService.getCountry();
+                response.put("data", result);
+            }
+            if (location.getCountry().getName() != null && location.getProvince() != null) {
+                List<Province> result = accountService.findlocationByCountry(location);
+                response.put("data", result);
+            }
+            if (location.getCountry() != null && location.getProvince() != null) {
+                List<District> result = accountService.findlocationByProvince(location);
+                response.put("data", result);
+                log.info("result" + result);
+
+            }
+
+            response.put("message", "ค้นหาสภานที่สำเร็จ");
+
+            log.info(response.toString());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+
     }
 
 }

@@ -32,8 +32,12 @@ import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
 import work1.demo.controller.AccountController;
 import work1.demo.data.AccountList;
+import work1.demo.data.Location;
 import work1.demo.data.Paging;
 import work1.demo.model.Account;
+import work1.demo.model.Country;
+import work1.demo.model.District;
+import work1.demo.model.Province;
 import work1.demo.repository.AccountRepository;
 
 @Slf4j
@@ -47,11 +51,11 @@ public class AccountService {
 
     private static final String ERROR = "error";
 
-    private static final String WHERE = "where";
+    private static final String WHERE = " where ";
 
-    private static final String AND = "AND";
+    private static final String AND = " AND ";
 
-    @Value("${prefixPath}")
+    @Value("")
     private String prefixPath;
 
     @Autowired
@@ -375,6 +379,64 @@ public class AccountService {
             return null;
         } catch (Exception e) {
             log.error("Error in checkusername", e);
+            return null;
+        }
+    }
+
+    public List<Province> findlocationByCountry(Location criterial) {
+
+        StringBuilder sb = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+
+        try {
+            sb.append("SELECT p.idprovince, p.name  FROM province p");
+            sb.append(" INNER JOIN country c on c.idcountry = p.idcountry");
+            sb.append(WHERE);
+            sb.append("c.name = ?");
+            params.add(criterial.getCountry().getName());
+
+            return jdbcTemplate.query(sb.toString(), new BeanPropertyRowMapper<>(Province.class),
+                    params.toArray());
+
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return null;
+        }
+
+    }
+
+    public List<District> findlocationByProvince(Location criterial) {
+
+        StringBuilder sb = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+
+        try {
+            sb.append("SELECT d.iddistrict , d.name FROM district d ");
+            sb.append("INNER JOIN province p on p.idprovince = d.idprovince");
+            sb.append(WHERE);
+            sb.append("p.name = ?");
+            params.add(criterial.getProvince().getName());
+
+            return jdbcTemplate.query(sb.toString(), new BeanPropertyRowMapper<>(District.class),
+                    params.toArray());
+
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return null;
+        }
+
+    }
+
+    public List<Country> getCountry() {
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append("SELECT * FROM country");
+            return jdbcTemplate.query(
+                    sb.toString(),
+                    new BeanPropertyRowMapper<>(Country.class));
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
             return null;
         }
     }

@@ -1,6 +1,6 @@
 package work1.demo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List; // ✅ ต้องใช้ java.util.List ไม่ใช่ org.hibernate.mapping.List
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.List; // ✅ ต้องใช้ java.util.List ไม่ใช่ org.hibernate.mapping.List
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -21,7 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
         converters.add(new MappingJackson2HttpMessageConverter(new ObjectMapper()));
     }
 
-     @Bean
+    @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
@@ -36,14 +36,14 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors()  // ✅ เปิด cors
-            .and()
-            .csrf().disable() // ❗ ปิด CSRF ชั่วคราวสำหรับ dev
-            .authorizeHttpRequests()
-            .requestMatchers("/**").permitAll() // ✅ ให้ทุก path เข้าถึงได้
-            .anyRequest().permitAll();
+                .cors() // ✅ เปิด cors
+                .and()
+                .csrf().disable() // ❗ ปิด CSRF ชั่วคราวสำหรับ dev
+                .authorizeHttpRequests()
+                .requestMatchers("/**").permitAll() // ✅ ให้ทุก path เข้าถึงได้
+                .anyRequest().permitAll();
 
         return http.build();
     }
-    
+
 }
