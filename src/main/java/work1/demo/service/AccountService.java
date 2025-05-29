@@ -441,4 +441,36 @@ public class AccountService {
         }
     }
 
+    public Location postlocation(Location criterial) {
+        StringBuilder sb = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+        try {
+            sb.append("UPDATE account ");
+            sb.append("SET ");
+            sb.append("country = ?, ");
+            sb.append("province = ?, ");
+            sb.append("district = ? ");
+            sb.append("WHERE idaccount = ?");
+
+            params.add(criterial.getCountry().getName());
+            params.add(criterial.getProvince().getName());
+            params.add(criterial.getDistrict().getName());
+            params.add(criterial.getIdaccount());
+
+            log.info("SQL: " + sb.toString());
+            log.info("Params: " + params);
+
+            int updatedRows = jdbcTemplate.update(sb.toString(), params.toArray());
+            if (updatedRows > 0) {
+                return criterial;
+            } else {
+                log.warn("❗️ไม่พบข้อมูลที่ต้องการอัปเดต (idaccount = " + criterial.getIdaccount() + ")");
+            }
+
+        } catch (Exception e) {
+            log.error("[❌ error] postlocation", e);
+        }
+        return null;
+    }
+
 }

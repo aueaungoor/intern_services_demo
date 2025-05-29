@@ -402,29 +402,49 @@ public class AccountController {
 
         try {
             if (location.getCountry() == null && location.getProvince() == null) {
+                log.info(location.toString());
                 List<Country> result = accountService.getCountry();
                 response.put("data", result);
-            }
-            if (location.getCountry().getName() != null && location.getProvince() != null) {
+            } else if (location.getCountry() != null && location.getCountry().getName() != null
+                    && location.getProvince() == null) {
+                // ✅ กรณีเลือกประเทศแล้ว → ส่งรายชื่อจังหวัด
                 List<Province> result = accountService.findlocationByCountry(location);
                 response.put("data", result);
-            }
-            if (location.getCountry() != null && location.getProvince() != null) {
+            } else if (location.getCountry() != null && location.getProvince() != null) {
+                // ✅ กรณีเลือกจังหวัดแล้ว → ส่งรายชื่ออำเภอ
                 List<District> result = accountService.findlocationByProvince(location);
                 response.put("data", result);
-                log.info("result" + result);
-
             }
 
-            response.put("message", "ค้นหาสภานที่สำเร็จ");
-
+            response.put("message", "ค้นหาสถานที่สำเร็จ");
             log.info(response.toString());
-
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("❌ ERROR in findlocation:", e);
             return ResponseEntity.internalServerError().body(null);
         }
+    }
 
+    @PostMapping("/post-location")
+    public ResponseEntity<Map<String, Object>> location(@RequestBody Location location) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        log.info(location.toString());
+        try {
+
+            Location result = accountService.postlocation(location);
+            response.put("data", result);
+            response.put("meassage", "บันทุกข้อมูลเเง้ว");
+
+            log.info(response.toString());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("message", e.toString());
+            log.error("❌ ERROR in findlocation:", e);
+            return ResponseEntity.internalServerError().body(null);
+        }
     }
 
 }

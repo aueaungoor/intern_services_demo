@@ -14,4 +14,6 @@ public class Location {
 
     private District district;
 
+    private Long idaccount;
+
 }
